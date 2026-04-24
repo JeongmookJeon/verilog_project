@@ -1,0 +1,13 @@
+./rtl/i2c/i2c_master.sv
+./rtl/i2c/i2c_slave.sv
+./tb/i2c/tb.sv
+./tb/i2c/agent.sv
+./tb/i2c/coverage.sv
+./tb/i2c/driver.sv
+./tb/i2c/env.sv
+./tb/i2c/interface.sv
+./tb/i2c/monitor.sv
+./tb/i2c/scoreboard.sv
+./tb/i2c/seq_item.sv
+./tb/i2c/sequence.sv
+./tb/i2c/test.sv

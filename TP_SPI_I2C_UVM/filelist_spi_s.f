@@ -1,0 +1,12 @@
+./rtl/spi/spi_slave.sv
+./tb/spi/slave/tb.sv
+./tb/spi/slave/agent.sv
+./tb/spi/slave/coverage.sv
+./tb/spi/slave/driver.sv
+./tb/spi/slave/env.sv
+./tb/spi/slave/interface.sv
+./tb/spi/slave/monitor.sv
+./tb/spi/slave/scoreboard.sv
+./tb/spi/slave/seq_item.sv
+./tb/spi/slave/sequence.sv
+./tb/spi/slave/test.sv

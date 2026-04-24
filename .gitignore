@@ -1,0 +1,58 @@
+################################
+# Vivado auto generated
+################################
+
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.Xil/
+
+################################
+# Simulation outputs
+################################
+
+*.jou
+*.log
+*.pb
+*.wdb
+*.str
+*.xpr
+
+################################
+# Generated project files
+################################
+
+*.wpc
+*.lpr
+
+################################
+# OS / Editor
+################################
+
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+
+################################
+# 추가 (필수)
+################################
+
+# IP repository (용량 폭발 방지)
+ip_repo/
+
+# waveform / debug
+*.wcfg
+*.vcd
+*.fsdb
+
+# simulation build (VCS 등)
+simv*
+csrc/
+*.daidir/
+coverage.vdb/
+
+# 기타
+*.key

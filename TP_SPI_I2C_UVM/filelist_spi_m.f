@@ -1,0 +1,12 @@
+./rtl/spi/spi_master.sv
+./tb/spi/master/tb.sv
+./tb/spi/master/agent.sv
+./tb/spi/master/coverage.sv
+./tb/spi/master/driver.sv
+./tb/spi/master/env.sv
+./tb/spi/master/interface.sv
+./tb/spi/master/monitor.sv
+./tb/spi/master/scoreboard.sv
+./tb/spi/master/seq_item.sv
+./tb/spi/master/sequence.sv
+./tb/spi/master/test.sv
