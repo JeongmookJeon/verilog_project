@@ -1,0 +1,76 @@
+#include <stdint.h>
+#include "xparameters.h"
+#include "sleep.h"
+#include "xil_printf.h"
+
+typedef struct{
+	utint32_t CR;
+	utint32_t IDR;
+	utint32_t ODR;
+}GPIO_Typedef_t;
+
+
+#define XPAR_GPIO8_0_S00_AXI_BASEADDR 0x44A00000
+#define XPAR_GPIO8_1_S00_AXI_BASEADDR 0x44A10000
+
+#define GPIOA_CR   (*(uint32_t*) (XPAR_GPIO8_0_S00_AXI_BASEADDR + 0x00))
+#define GPIOA_IDR   (*(uint32_t*) (XPAR_GPIO8_0_S00_AXI_BASEADDR + 0x04))
+#define GPIOA_ODR   (*(uint32_t*) (XPAR_GPIO8_0_S00_AXI_BASEADDR + 0x08))
+
+#define GPIOB_CR   (*(uint32_t*) (XPAR_GPIO8_1_S00_AXI_BASEADDR + 0x00))
+#define GPIOB_IDR   (*(uint32_t*) (XPAR_GPIO8_1_S00_AXI_BASEADDR + 0x04))
+#define GPIOB_ODR   (*(uint32_t*) (XPAR_GPIO8_1_S00_AXI_BASEADDR + 0x08))
+
+
+#define GPIOA ((GPIO_Typedef_t *)(XPAR_GPIO8_0_S00_AXI_BASEADDR))
+#define GPIOB ((GPIO_Typedef_t *)(XPAR_GPIO8_0_S00_AXI_BASEADDR))
+
+
+int main()
+{
+   //GPIOA_CR = 0x0f; //상위 4bit는 입력. 하위 4bit는 digit
+   //GPIOB_CR = 0xff; //segment
+   GPIOA -> CR = 0x0f;
+   GPIOB -> CR = 0xff;
+
+   while(1)
+   {
+	   //GPIOB_ODR = 0x00; // segment 모두 선택
+	   GPIOB -> ODR= 0x00;
+
+	   if((GPIOA_IDR  & (1<<4))){
+		   GPIOA -> ODR &= ~(1<<0); // digit 모두 선택
+	   	   }
+	   	   else if((GPIOA_IDR  & (1<<5))){
+	   		 GPIOA -> ODR &= ~(1<<1); // digit 모두 선택
+	   	   }
+	   	   else if((GPIOA_IDR  & (1<<6))){
+	   		 GPIOA -> ODR &= ~(1<<2); // digit 모두 선택
+	   	   }
+	   	   else if((GPIOA_IDR  & (1<<7))){
+	   		 GPIOA -> ODR &= ~(1<<3); // digit 모두 선택
+	   	   }
+	   	   else {
+	   		 GPIOA -> ODR |= (0x0f);
+	   	   }
+
+   }
+
+//	   if((GPIOA_IDR  & (1<<4))){
+//		   GPIOA_ODR &= ~(1<<0); // digit 모두 선택
+//	   }
+//	   else if((GPIOA_IDR  & (1<<5))){
+//		   GPIOA_ODR &= ~(1<<1); // digit 모두 선택
+//   }
+//	   else if((GPIOA_IDR  & (1<<6))){
+//		   GPIOA_ODR &= ~(1<<2); // digit 모두 선택
+//	   }
+//	   else if((GPIOA_IDR  & (1<<7))){
+//		   GPIOA_ODR &= ~(1<<3); // digit 모두 선택
+//	   }
+//	   else {
+//		   GPIOA_ODR |= (0x0f);
+//	   }
+ //  }
+   return 0;
+}
