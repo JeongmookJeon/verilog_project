@@ -1,0 +1,75 @@
+#include "UpCounter.h"
+
+typedef enum{
+	RELEASED = 0,
+	PUSHED,
+	NO_ACT
+}button_state_t;
+
+int Button_Init()
+{//초기화
+ GPIO_SetMode(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|, INPUT);
+}
+
+
+button_state_t Button_GetState()
+{
+	static button_state prevState=RELEASED;
+	button_state_t curState = GPIO_ReadPin(GPIOA, GPIO_PIN_4);
+	if(prevState == RELEASED && curState == PUSHED){
+		prevState = PUSHED;
+		return PUSHED;
+	}
+	//버튼에서 손을 떼었을 때.
+	else if(prevState == PUSHED && curState == RELEASED){
+		prevState = RELEASED;
+			return RELEASED;
+	}
+	return NO_ACT;
+}
+
+ uint16_t counter = 0;
+
+void UpCounter_Init()
+{
+	FND_Init();
+	counter = 0;
+}
+
+void UpCounter_Excute()
+{
+	UpCounter_DispLoop();
+
+	if(Button_GetState()== PUSHED) {
+		uint8_t upCounterState = 0;
+		if(upCounterState){
+			UpCounter_Run();
+			upCounterState = 1;
+		}
+		else{//0일때
+		UpCounter_Stop();
+		}
+	}
+}
+
+void UpCounter_DispLoop()
+{
+	FND_Disp_Digit();
+}
+
+void UpCounter_Run()
+{
+	static uint32_t  prevTimeCounter = 0;
+
+	if(millis() - prevTimeCounter < 100-1){
+		return;
+
+		}
+		prevTimeCounter = millis();
+		FND_SetNum(counter++);
+}
+
+void UpCounter_Stop() //stop일때!!
+{
+	FND_SetNum(counter);
+}

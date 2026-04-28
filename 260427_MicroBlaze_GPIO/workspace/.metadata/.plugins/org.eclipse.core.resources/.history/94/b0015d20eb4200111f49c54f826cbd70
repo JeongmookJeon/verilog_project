@@ -1,0 +1,55 @@
+
+#include "ap_main.h"
+#include "../common/common.h"
+#include "UpCounter/UpCounter.h"
+#include "Watch/Watch.h"
+#include "../driver/Button/button.h" // 버튼 드라이버 헤더 추가
+
+typedef enum {
+    WATCH = 0,
+    UPCOUNTER = 1
+} Mode_state_t;
+
+Mode_state_t curMode = WATCH; // 기본 화면은 시계(Watch)로 시작
+hBtn_t hBtnMode; // 모드 변경을 담당할 버튼 구조체
+
+void ap_init()
+{
+    // 각 하위 서비스들 초기화
+    Watch_Init();
+    UpCounter_Init();
+
+    // 모드 변경 버튼 초기화 (남는 버튼 핀번호 확인 후 수정하세요! 예: PIN_5)
+    Button_Init(&hBtnMode, GPIOA, GPIO_PIN_5);
+}
+
+void ap_excute()
+{
+    while(1)
+    {
+        // 1. 모드 버튼이 눌렸는지 확인하고 선로(Mode) 바꾸기
+        if (Button_GetState(&hBtnMode) == ACT_PUSHED) {
+
+            // 시계 -> 업카운터 -> 시계 로 토글(Toggle)
+            if (curMode == WATCH) {
+                curMode = UPCOUNTER;
+            } else {
+                curMode = WATCH;
+            }
+
+            // [중요] 모드가 바뀔 때 이전 모드의 FND 잔상을 지워줍니다.
+            FND_DispAllOff();
+        }
+
+        // 2. 현재 선로(Mode)에 맞는 서비스만 실행하기
+        if (curMode == WATCH) {
+            Watch_Execute();
+        } else if (curMode == UPCOUNTER) {
+            UpCounter_Excute();
+        }
+
+        millis_inc();
+        delay_ms(1);
+    }
+}
+

@@ -1,0 +1,106 @@
+
+#include "FND.h"
+
+
+uint16_t fndNumData = 0;
+
+void FND_Init(){ // 초기화
+	//GPIO에 대한 선언, GPIOA0, 1, 2, 3 COM 연결
+	GPIO_SetMode(FND_COM_PORT, FND_COM_DIG_1|FND_COM_DIG_2|FND_COM_DIG_3|FND_COM_DIG_4, OUTPUT);
+	//GPIO에 대한 선언, GPIOB segment abcdefg,dp 연결
+    GPIO_SetMode(FND_FONT_PORT, SEG_PIN_A|SEG_PIN_B|SEG_PIN_C|SEG_PIN_D|SEG_PIN_E|SEG_PIN_F|SEG_PIN_G|SEG_PIN_DP, OUTPUT);
+
+}
+
+void FND_SetComPort(GPIO_Typedef_t *FND_Port, uint32_t Seg_Pin, int OnOff)
+{
+	GPIO_WritePin(FND_Port, Seg_Pin, OnOff);
+}
+
+//fnd digit 돌아가면서 켜기
+void FND_Disp_Digit()
+{
+	static uint8_t fndDigState =0;
+	fndDigstate=(fndDigState +1) %4;
+
+	switch(fndDigState)
+	{
+	case 0 :
+		FND_DispDigit_1();
+		break;
+	case 1 :
+		FND_DispDigit_10();
+		break;
+	case 2 :
+		FND_DispDigit_100();
+		break;
+	case 3 :
+		FND_DispDigit_1000();
+		break;
+	default:
+		FND_DispDigit_1();
+		break;
+	}
+}
+
+
+void FND_DisDigit_1()
+{
+	uint8_t fndFont[16] = {0xc0, 0xf9, 0xa4, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e};
+	//num의 자릿수 분리
+	uint8_t digitData1 = fndNumData % 10;
+	//끄고
+	FND_DispAllOff();	//data 내보내고
+	GPIO_WritePort(FND_FONT_PORT, fndFont[digitData1]);
+	//켜고
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_1, ON);
+}
+
+void FND_DisDigit_10()
+{
+	//num의 자릿수 분리
+		uint8_t digitData1 = fndNumData /10 % 10;
+		//끄고
+		FND_DispAllOff();		//data 내보내고
+		GPIO_WritePort(FND_FONT_PORT, fndFont[digitData10]);
+		//켜고
+		FND_SetComPort(FND_COM_PORT, FND_COM_DIG_2, ON);
+}
+
+void FND_DisDigit_100()
+{
+	//num의 자릿수 분리
+	uint8_t digitData1 = fndNumData /100 % 10;
+	//끄고
+	FND_DispAllOff();	//data 내보내고
+	GPIO_WritePort(FND_FONT_PORT, fndFont[digitData100]);
+	//켜고
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_3, ON);
+}
+
+void FND_DisDigit_1000()
+{
+	//num의 자릿수 분리
+	uint8_t digitData1 = fndNumData /1000 % 10;
+	//끄고
+	FND_DispAllOff();
+	//data 내보내고
+	GPIO_WritePort(FND_FONT_PORT, fndFont[digitData1000]);
+	//켜고
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_4, ON);
+}
+
+void FND_SetNum(uint16_t num)
+{
+	fndNumData = num;
+}
+
+void FND_DispAllOn()
+{
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_1|FND_COM_DIG_2|FND_COM_DIG_3|FND_COM_DIG_4, OFF );
+}
+
+void FND_DispAllOff()
+{
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_1|FND_COM_DIG_2|FND_COM_DIG_3|FND_COM_DIG_4, OFF );
+}

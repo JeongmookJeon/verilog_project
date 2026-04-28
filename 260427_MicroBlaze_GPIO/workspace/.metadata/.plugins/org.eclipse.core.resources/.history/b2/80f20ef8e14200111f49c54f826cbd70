@@ -1,0 +1,46 @@
+
+
+typedef enum{
+	HOUR,
+	MIN,
+	SEC,
+	MSEC,
+}watch_state_t;
+
+watch_state_t w_state;
+
+uint16_t w_counter = 0;
+
+void Watch_Init()
+{
+	FND_Init();
+	w_counter = 0;
+}
+
+// digit의 freq 빨라서 1개씩 출력하는 함수
+void Watch_DispLoop(){
+	FND_DispDigit();
+}
+
+//msec
+void Watch_Speed(){
+	static uint32_t MsecCounter = 0;
+	if (millis() - MsecCounter < 100 - 1) {
+	return;
+	}
+	MsecCounter = millis();
+	FND_SetNum(w_counter++);
+}
+
+//msec->sec->min->hour 계층 구조
+void Watch_Excute() {
+	Watch_Speed();
+	switch(w_state){
+	case MSEC:
+		if(w_counter <= 100-1){ w_state = SEC;}
+	else if(w_counter <= 6000-1 & MSEC <= 60) w_state = MIN;
+	else if(w_counter <=360000-1 & MIN <= 60) w_state = HOUR;
+	else if(w_counter <= 8640000-1 & HOUT <= 24) w_state = MSEC;
+	break;
+	}
+}

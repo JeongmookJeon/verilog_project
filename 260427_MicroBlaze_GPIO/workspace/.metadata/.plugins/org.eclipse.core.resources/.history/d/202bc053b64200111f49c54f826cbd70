@@ -1,0 +1,20 @@
+
+
+#include "ap_main.h"
+#include "../driver/FND/FND.h"
+#include "../common/common.h"
+#include "UpCounter/UpCounter.h"
+
+void ap_init()
+{
+	UpCounter_Init();
+}
+void ap_excute()
+{
+	while(1)
+	{
+		UpCounter_Excute();
+		millis_inc();
+		delay_ms(10);
+	}
+}

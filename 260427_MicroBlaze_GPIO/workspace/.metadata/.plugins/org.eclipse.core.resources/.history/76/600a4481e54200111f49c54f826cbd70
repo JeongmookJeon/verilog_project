@@ -1,0 +1,71 @@
+#include "Watch.h"
+
+// 1. 구조체(struct) 정의
+
+// 2. 위에서 만든 구조체 틀(TimeData_t)을 바탕으로 실제 변수(watchTime)를 생성하고 0으로 초기화
+Watch_state_t w_state = { 0, 0, 0, 0 };
+
+void Watch_Init() {
+	FND_Init();
+	w_state.hour = 0;
+	w_state.min = 0;
+	w_state.sec = 0;
+	w_state.msec = 0;
+}
+
+void Watch_Execute() {
+	// 시계 무한 LOOP
+	Watch_DispLoop();
+	Watch_Run();
+}
+
+void Watch_DispLoop() {
+	FND_DispDigit();
+}
+
+void Watch_Run() {
+	static uint32_t Watch_Counter = 0;
+
+	// 10ms(0.01초)마다 한 번씩 아래 로직을 실행
+	if (millis() - Watch_Counter < 10) {
+		return;
+	}
+	Watch_Counter = millis();
+
+	w_state.msec++;                  // 10ms마다 msec 1 증가
+
+	if (w_state.msec >= 100) {       // 10ms * 100 = 1000ms (1초)
+		w_state.msec = 0;
+		w_state.sec++;               // msec가 꽉 차면 sec 1 증가
+
+		if (w_state.sec >= 60) {     // 60초가 되면
+			w_state.sec = 0;
+			w_state.min++;           // sec가 꽉 차면 min 1 증가
+
+			if (w_state.min >= 60) { // 60분이 되면
+				w_state.min = 0;
+				w_state.hour++;      // min이 꽉 차면 hour 1 증가
+
+				if (w_state.hour >= 24) { // 24시간이 되면 0시로 초기화
+					w_state.hour = 0;
+				}
+			}
+		}
+	}
+
+	// 4. FND 디스플레이 데이터 갱신 (MM:SS)
+	// 분(min) 값을 백의 자리와 천의 자리로 올리고, 초(sec)를 더해 4자리 숫자로 만듦.
+	uint16_t FND_data = (w_state.min * 100) + w_state.sec;
+	FND_SetNum(FND_data);
+
+	// 상태를 공유하기 위한 전역 변수 선언 (FND.c에 선언될 변수)
+	extern uint8_t fnd_dp_state;
+
+	// (기존) FND_DP_ON, FND_DP_OFF 호출 함수 삭제
+	// (수정) 500ms 간격으로 상태값만 변경
+	if (w_state.msec < 50) {
+		fnd_dp_state = 1; // DP 켜기 상태 지정
+	} else {
+		fnd_dp_state = 0; // DP 끄기 상태 지정
+	}
+}

@@ -1,0 +1,13 @@
+/*
+ * GPIO.h
+ *
+ *  Created on: 2026. 4. 28.
+ *      Author: kccistc
+ */
+
+#ifndef SRC_HAL_GPIO_GPIO_H_
+#define SRC_HAL_GPIO_GPIO_H_
+
+
+
+#endif /* SRC_HAL_GPIO_GPIO_H_ */

@@ -1,0 +1,95 @@
+#include <stdint.h>
+#include "xparameters.h"
+#include "sleep.h"
+#include "xil_printf.h"
+#include "HAL/GPIO/GPIO.h"
+
+#define FND_FONT_PORT GPIOB
+#define FND_COM_PORT  GPIOA
+#define FND_COM_DIG_1 GPIO_PIN_0
+#define FND_COM_DIG_2 GPIO_PIN_1
+#define FND_COM_DIG_3 GPIO_PIN_2
+#define FND_COM_DIG_4 GPIO_PIN_3
+
+#define SEG_PIN_A GPIO_PIN_0
+#define SEG_PIN_B GPIO_PIN_1
+#define SEG_PIN_C GPIO_PIN_2
+#define SEG_PIN_D GPIO_PIN_3
+#define SEG_PIN_E GPIO_PIN_4
+#define SEG_PIN_F GPIO_PIN_5
+#define SEG_PIN_G GPIO_PIN_6
+#define SEG_PIN_DP GPIO_PIN_7
+
+void FND_Init(){ // 초기화
+	//GPIO에 대한 선언, GPIOA0, 1, 2, 3 COM 연결
+	GPIO_SetMode(FND_COM_PORT, FND_COM_DIG_1|FND_COM_DIG_2|FND_COM_DIG_3|FND_COM_DIG_, OUTPUT);
+	//GPIO에 대한 선언, GPIOB segment abcdefg,dp 연결
+    GPIO_SetMode(FND_FONT_PORT, SEG_PIN_A|SEG_PIN_B|SEG_PIN_C|SEG_PIN_D|SEG_PIN_E|SEG_PIN_F|SEG_PIN_G|SEG_PIN_DP, OUTPUT);
+
+}
+
+void FND_DisDigit_1()
+{
+	//data의 자릿수 분리
+	data = data % 10;
+	GPIO_WritePort(FND_FONT_PORT, data);
+}
+
+void FND_DisDigit_10()
+{
+
+}
+
+void FND_DisDigit_100()
+{
+
+}
+
+void FND_DisDigit_1000()
+{
+
+}
+
+void FND_SetNum()
+{
+
+}
+
+void FND_DispOn()
+{
+
+}
+
+void FND_DispOff()
+{
+
+}
+
+int main()
+{
+    GPIO_SetMode(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, OUTPUT);
+    GPIO_SetMode(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, INPUT);
+    GPIO_SetMode(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, OUTPUT);
+
+    while(1)
+    {
+        GPIO_WritePort(GPIOB, 0x00);
+
+        if(GPIO_ReadPin(GPIOA, GPIO_PIN_4)){
+            GPIO_WritePin(GPIOA, GPIO_PIN_0, RESET);
+        }
+        else if(GPIO_ReadPin(GPIOA, GPIO_PIN_5)){
+            GPIO_WritePin(GPIOA, GPIO_PIN_1, RESET);
+        }
+        else if(GPIO_ReadPin(GPIOA, GPIO_PIN_6)){
+            GPIO_WritePin(GPIOA, GPIO_PIN_2, RESET);
+        }
+        else if(GPIO_ReadPin(GPIOA, GPIO_PIN_7)){
+                  GPIO_WritePin(GPIOA, GPIO_PIN_3, RESET);
+              }
+        else {
+            GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, SET);
+        }
+    }
+    return 0;
+}

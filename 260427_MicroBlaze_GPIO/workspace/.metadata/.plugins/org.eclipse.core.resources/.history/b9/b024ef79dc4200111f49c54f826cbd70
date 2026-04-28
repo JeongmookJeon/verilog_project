@@ -1,0 +1,26 @@
+
+
+typedef enum{
+	HOUR,
+	MIN,
+	SEC,
+	MSEC,
+}watch_state_t;
+
+uint16_t w_counter = 0;
+
+void Watch_Init()
+{
+	FND_Init();
+	w_counter = 0;
+}
+
+// digit의 freq 빨라서 1개씩 출력하는 함수
+void Watch_DispLoop(){
+	FND_DispDigit();
+}
+
+//sec? msec? 수준의 counter
+void UpCounter_Excute() {
+	UpCounter_Run();
+}

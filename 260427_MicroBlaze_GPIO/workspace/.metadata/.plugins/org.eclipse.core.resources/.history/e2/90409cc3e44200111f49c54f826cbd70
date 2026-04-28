@@ -1,0 +1,128 @@
+#include "FND.h"
+
+uint16_t fndNumData = 0;
+
+uint8_t fnd_dp_state = 0; // Watch.c와 공유할 전역 변수 추가 선언
+
+void FND_Init() { // 초기화
+	//GPIO에 대한 선언, GPIOA0, 1, 2, 3 COM 연결
+	GPIO_SetMode(FND_COM_PORT,
+			FND_COM_DIG_1 | FND_COM_DIG_2 | FND_COM_DIG_3 | FND_COM_DIG_4,
+			OUTPUT);
+	//GPIO에 대한 선언, GPIOB segment abcdefg,dp 연결
+	GPIO_SetMode(FND_FONT_PORT,
+			SEG_PIN_A | SEG_PIN_B | SEG_PIN_C | SEG_PIN_D | SEG_PIN_E
+					| SEG_PIN_F | SEG_PIN_G | SEG_PIN_DP, OUTPUT);
+
+}
+
+void FND_SetComPort(GPIO_Typedef_t *FND_Port, uint32_t Seg_Pin, int OnOff) {
+	GPIO_WritePin(FND_Port, Seg_Pin, OnOff);
+}
+
+//fnd digit 돌아가면서 켜기
+void FND_DispDigit() {
+	static uint8_t fndDigState = 0;
+	fndDigState = (fndDigState + 1) % 4;
+
+	switch (fndDigState) {
+	case 0:
+		FND_DisDigit_1();
+		break;
+	case 1:
+		FND_DisDigit_10();
+		break;
+	case 2:
+		FND_DisDigit_100();
+		break;
+	case 3:
+		FND_DisDigit_1000();
+		break;
+	default:
+		FND_DisDigit_1();
+		break;
+	}
+}
+
+void FND_DisDigit_1() {
+	uint8_t fndFont[16] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8,
+			0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e };
+	//num의 자릿수 분리
+	uint8_t digitData1 = fndNumData % 10;
+	//끄고
+	FND_DispAllOff();	//data 내보내고
+	GPIO_WritePort(FND_FONT_PORT, fndFont[digitData1]);
+	//켜고
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_1, ON);
+}
+
+void FND_DisDigit_10() {
+	uint8_t fndFont[16] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8,
+			0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e };
+
+	//num의 자릿수 분리
+	uint8_t digitData10 = fndNumData / 10 % 10;
+	//끄고
+	FND_DispAllOff();		//data 내보내고
+	GPIO_WritePort(FND_FONT_PORT, fndFont[digitData10]);
+	//켜고
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_2, ON);
+}
+void FND_DisDigit_100() {
+    uint8_t fndFont[16] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8,
+            0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e };
+
+    uint8_t digitData100 = (fndNumData / 100) % 10;
+
+    // 배열에서 읽어온 기본 폰트 데이터를 변수에 임시 저장
+    uint8_t outputFont = fndFont[digitData100];
+
+    // 3번 자리를 출력할 때만 DP 깜빡임 상태 확인
+    if (fnd_dp_state == 1) {
+        // DP 비트(최상위 비트 0x80)를 0으로 클리어하여 점등 합성 (Active-Low)
+        outputFont = outputFont & ~(0x80);
+    }
+
+    FND_DispAllOff();
+    // 기본 숫자만 있는 데이터가 아닌, 점(DP)이 합성된 최종 데이터를 포트로 출력
+    GPIO_WritePort(FND_FONT_PORT, outputFont);
+    FND_SetComPort(FND_COM_PORT, FND_COM_DIG_3, ON);
+}
+
+void FND_DisDigit_1000() {
+	uint8_t fndFont[16] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8,
+			0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e };
+
+	//num의 자릿수 분리
+	uint8_t digitData1000 = fndNumData / 1000 % 10;
+	//끄고
+	FND_DispAllOff();
+	//data 내보내고
+	GPIO_WritePort(FND_FONT_PORT, fndFont[digitData1000]);
+	//켜고
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_4, ON);
+}
+
+void FND_SetNum(uint16_t num) {
+	fndNumData = num;
+}
+
+void FND_DispAllOn() {
+	FND_SetComPort(FND_COM_PORT,
+			FND_COM_DIG_1 | FND_COM_DIG_2 | FND_COM_DIG_3 | FND_COM_DIG_4, ON);
+}
+
+void FND_DispAllOff() {
+	FND_SetComPort(FND_COM_PORT,
+			FND_COM_DIG_1 | FND_COM_DIG_2 | FND_COM_DIG_3 | FND_COM_DIG_4, OFF);
+}
+
+void FND_DP_ON(){
+	//FND 3번의 DP
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_3, ON);
+	FND_SetComPort(FND_FONT_PORT, SEG_PIN_DP, ON);
+}
+void FND_DP_OFF(){
+	FND_SetComPort(FND_COM_PORT, FND_COM_DIG_3, OFF);
+	FND_SetComPort(FND_FONT_PORT, SEG_PIN_DP, OFF);
+}

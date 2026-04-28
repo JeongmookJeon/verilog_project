@@ -1,0 +1,55 @@
+#include "ap_main.h"
+#include "../driver/FND/FND.h"
+#include "../common/common.h"
+#include "UpCounter/UpCounter.h"
+#include "Watch/Watch.h"
+#include "../driver/Button/button.h" // 정확한 버튼 헤더 경로 포함
+
+// 1. 시스템의 현재 모드를 저장하는 전역 변수 (초기값: 시계)
+SystemMode_t currentMode = SYS_MODE_WATCH;
+
+// 2. 모드 전환을 제어할 버튼 핸들러 변수 선언 (메모리 할당)
+hBtn_t btn_mode;
+
+void ap_init()
+{
+    // 각 모듈 초기화
+    UpCounter_Init();
+    Watch_Init();
+
+    // 3. 버튼 초기화
+    // 첫 번째 인자: 버튼 핸들러의 주소(&)
+    // 두 번째, 세 번째 인자: 실제 모드 전환 스위치가 연결된 물리적 포트와 핀 번호 입력
+    Button_Init(&btn_mode, GPIOA, GPIO_PIN_4);
+}
+
+void ap_excute()
+{
+    // 4. 버튼 동작 감지 (Edge Detection)
+    // 버튼 드라이버에서 정의한 ACT_PUSHED(눌리는 순간) 상태일 때만 조건문 진입
+    if (Button_GetState(&btn_mode) == ACT_PUSHED) {
+
+        // 현재 상태를 확인하고 반대 모드로 토글(Toggle)
+        if (currentMode == SYS_MODE_WATCH) {
+            currentMode = SYS_MODE_UPCOUNTER;
+        }
+        else if (currentMode == SYS_MODE_UPCOUNTER) {
+            currentMode = SYS_MODE_WATCH;
+        }
+    }
+
+    // 5. 현재 상태에 따른 모듈 분기 실행 (라우팅)
+    switch (currentMode) {
+        case SYS_MODE_WATCH:
+            Watch_Execute();
+            break;
+
+        case SYS_MODE_UPCOUNTER:
+            UpCounter_Execute();
+            break;
+    }
+
+    // 6. 타이머 카운트 로직
+    millis_inc();
+    delay_ms(1);
+}

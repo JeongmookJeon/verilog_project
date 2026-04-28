@@ -1,0 +1,37 @@
+#include <stdint.h>
+#include "xparameters.h"
+#include "sleep.h"
+#include "xil_printf.h"
+#include "HAL/GPIO/GPIO.h"
+
+int main()
+{
+    // GPIOA_CR = 0x0f; // 상위 4bit는 입력. 하위 4bit는 digit
+    // GPIOB_CR = 0xff; // segment
+    // -> 이것은 '*'붙인거랑 동일하다.
+    GPIOA->CR = 0x0f;
+    GPIOB->CR = 0xff;
+
+    GPIO_SetMode(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, OUTPUT);
+    GPIO_SetMode(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, INPUT);
+    GPIO_SetMode(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, OUTPUT);
+
+    while(1)
+    {
+        GPIO_WritePort(GPIOB, 0x00);
+
+        if(GPIO_ReadPin(GPIOA, GPIO_PIN_4)){
+            GPIO_WritePin(GPIOA, GPIO_PIN_0, RESET);
+        }
+        else if(GPIO_ReadPin(GPIOA, GPIO_PIN_5)){
+            GPIO_WritePin(GPIOA, GPIO_PIN_1, RESET);
+        }
+        else if(GPIO_ReadPin(GPIOA, GPIO_PIN_6)){
+            GPIO_WritePin(GPIOA, GPIO_PIN_2, RESET);
+        }
+        else {
+            GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, SET);
+        }
+    }
+    return 0;
+}

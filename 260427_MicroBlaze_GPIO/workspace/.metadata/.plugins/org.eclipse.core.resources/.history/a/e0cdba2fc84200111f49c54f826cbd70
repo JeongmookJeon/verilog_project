@@ -1,0 +1,124 @@
+#include "UpCounter.h"
+#include "sleep.h"
+
+typedef enum{
+   STOP,
+   RUN,
+   CLEAR
+}upcounter_state_t;
+
+typedef enum {
+   RELEASED = 0,
+   PUSHED,
+   NO_ACT
+}button_state_t;
+
+void Button_Init()
+{
+   GPIO_SetMode(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, INPUT);
+}
+
+button_state_t Button_GetState()
+{
+   static button_state_t prevState = RELEASED;
+   button_state_t curState = GPIO_ReadPin(GPIOA,GPIO_PIN_4);
+   if(prevState == RELEASED && curState == PUSHED){
+      delay_ms(5);
+      prevState = PUSHED;
+      return PUSHED;
+   }
+   else if (prevState == PUSHED && curState == RELEASED){
+      delay_ms(5);
+      prevState = RELEASED;
+      return RELEASED;
+   }
+   return NO_ACT;
+}
+
+button_state_t Button2_GetState()
+{
+   static button_state_t prevState = RELEASED;
+   button_state_t curState = GPIO_ReadPin(GPIOA,GPIO_PIN_7);
+   if(prevState == RELEASED && curState == PUSHED){
+      delay_ms(5);
+      prevState = PUSHED;
+      return PUSHED;
+   }
+   else if (prevState == PUSHED && curState == RELEASED){
+      delay_ms(5);
+      prevState = RELEASED;
+      return RELEASED;
+   }
+   return NO_ACT;
+}
+
+uint16_t counter = 0;
+
+void UpCounter_Init()
+{
+   FND_Init();
+   Button_Init();
+   counter = 0;
+}
+
+void UpCounter_Excute()
+{
+    UpCounter_DispLoop();
+     static upcounter_state_t upCounterState = STOP;
+
+     switch (upCounterState)
+       {
+       case STOP:
+          UpCounter_Stop();
+          if(Button_GetState()== PUSHED){
+             upCounterState = RUN;
+          }else if(Button2_GetState()== PUSHED){
+                 upCounterState = CLEAR;}
+
+         break;
+       case RUN:
+          UpCounter_Run();
+          if(Button_GetState()== PUSHED){
+             upCounterState = STOP;
+          } else if(Button2_GetState()==PUSHED){
+             upCounterState = STOP;
+          }
+          break;
+       case CLEAR:
+          UpCounter_Clear();
+          upCounterState = STOP;
+          break;
+       default:
+          UpCounter_Stop();
+          break;
+       }
+
+}
+
+void UpCounter_DispLoop()
+{
+   FND_DispDigit();
+}
+
+void UpCounter_Run()
+{
+   static uint32_t prevTimeCounter = 0;
+   if(millis() - prevTimeCounter < 100-1)
+            {
+               return;
+   }
+   prevTimeCounter = millis();
+   FND_SetNum(counter++);
+}
+
+void UpCounter_Stop()
+{
+   FND_SetNum(counter);
+}
+
+void UpCounter_Clear()
+{
+   counter = 0;
+   FND_SetNum(counter);
+}
+

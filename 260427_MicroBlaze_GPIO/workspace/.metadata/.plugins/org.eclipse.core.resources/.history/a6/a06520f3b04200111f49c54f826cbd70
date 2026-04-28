@@ -1,0 +1,51 @@
+#include <stdint.h>
+#include "xparameters.h"
+#include "sleep.h"
+#include "xil_printf.h"
+#include "HAL/GPIO/GPIO.h"
+#include "driver/FND/FND.h"
+
+int main()
+{
+
+	FND_Init();
+	//uint16_t counter = 0;
+	FND_SetNum(1234);
+	while(1)
+	{
+		FND_Disp_Digit();
+		usleep(1000);
+	}
+	return 0;
+
+
+
+}
+
+/*
+// GPIO_SetMode(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, OUTPUT);
+// GPIO_SetMode(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, INPUT);
+// GPIO_SetMode(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, OUTPUT);
+
+ while(1)
+ {
+     GPIO_WritePort(GPIOB, 0x00);
+
+     if(GPIO_ReadPin(GPIOA, GPIO_PIN_4)){
+         GPIO_WritePin(GPIOA, GPIO_PIN_0, RESET);
+     }
+     else if(GPIO_ReadPin(GPIOA, GPIO_PIN_5)){
+         GPIO_WritePin(GPIOA, GPIO_PIN_1, RESET);
+     }
+     else if(GPIO_ReadPin(GPIOA, GPIO_PIN_6)){
+         GPIO_WritePin(GPIOA, GPIO_PIN_2, RESET);
+     }
+     else if(GPIO_ReadPin(GPIOA, GPIO_PIN_7)){
+               GPIO_WritePin(GPIOA, GPIO_PIN_3, RESET);
+           }
+     else {
+         GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, SET);
+     }
+ }
+ return 0;
+ */

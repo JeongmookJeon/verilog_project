@@ -1,0 +1,15 @@
+#ifndef SRC_AP_AP_MAIN_H_
+#define SRC_AP_AP_MAIN_H_
+
+#include <stdint.h>
+
+// 시스템 동작 모드 상태 정의
+typedef enum {
+    SYS_MODE_WATCH,
+    SYS_MODE_UPCOUNTER
+} SystemMode_t;
+
+void ap_init();
+void ap_excute();
+
+#endif /* SRC_AP_AP_MAIN_H_ */
