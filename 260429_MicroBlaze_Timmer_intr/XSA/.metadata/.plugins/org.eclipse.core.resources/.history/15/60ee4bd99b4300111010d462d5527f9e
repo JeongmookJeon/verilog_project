@@ -1,0 +1,103 @@
+#include "xparameters.h"
+#include "xintc.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+
+#include "ap_main.h"
+#include "../common/common.h"
+#include "UpCounter/UpCounter.h"
+#include "Watch/Watch.h"
+#include "../driver/Button/button.h" // 버튼 드라이버 헤더 추가
+
+#define INTC_DEV_ID XPAR_INTC_0_DEVICE_ID
+#define TMR1_DEV_ID XPAR_INTC_1_DEVICE_ID
+#define TMR2_DEV_ID XPAR_INTC_2_DEVICE_ID
+
+#define TMR1_BASEADDR 	XPAR_TMR_1_S00_AXI_BASEADDR
+#define TMR2_BASEADDR 	XPAR_TMR_2_S00_AXI_BASEADDR
+
+#define TMR1_CR			*(uint32_t *)(TMR1_BASEADDR + 0x00)
+#define TMR1_PSC		*(uint32_t *)(TMR1_BASEADDR + 0x04)
+#define TMR1_ARR		*(uint32_t *)(TMR1_BASEADDR + 0x08)
+#define TMR1_CNT		*(uint32_t *)(TMR1_BASEADDR + 0x0c)
+
+#define TMR2_CR			*(uint32_t *)(TMR1_BASEADDR + 0x00)
+#define TMR2_PSC		*(uint32_t *)(TMR1_BASEADDR + 0x04)
+#define TMR2_ARR		*(uint32_t *)(TMR1_BASEADDR + 0x08)
+#define TMR2_CNT		*(uint32_t *)(TMR1_BASEADDR + 0x0c)
+
+XIntc IntrController;
+
+void TMR1_ISR(void *CallbackRef) {
+	xil_printf("1sec TIMER 1 ISR!\n");
+}
+void TMR2_ISR(void *CallbackRef) {
+	xil_printf("2sec                     TIMER 2 ISR\n!");
+}
+
+int SetupInterruptSystem() {
+	int status;
+	//1. 인터럽트 컨트롤러 초기화
+	status = XIntc_Initialize(&IntrController, INTC_DEV_ID);
+	if (status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+
+	//2-1. TMR1_ISR 함수를 Intc와 연결
+	status = XIntc_Connect(&IntrController, TMR1_DEV_ID,
+			(XInterruptHandler) TMR1_ISR, (void *) 0);
+	if (status != XST_SUCESS) {
+		return XST_FAILURE;
+	}
+	//2-2 TMR2-ISR 함수를 INTC와 연결
+	status = XIntc_Connect(&IntrController, TMR2_DEV_ID,
+			(XInterruptHandler) TMR2_ISR, (void *) 0);
+	if (status != XST_SUCESS) {
+		return XST_FAILURE;
+	}
+	//3. Interrupt Controller 시작
+	status = XIntc_Start(&IntrControll, XIN_REAL_MODE);
+	if (status != XST_SUCESS) {
+		return XST_FAILURE;
+	}
+	//4. 각각의  인터럽트 채널 활성화
+	XIntc_Enable(&IntrController, TMR1_DEV_ID);
+	XIntc_Enable(&IntrController, TMR2_DEV_ID);
+
+	//5. MicroBlaze의 Exception 초기화 및 활성화
+	//제일 마지막 한번 실행
+	//CPU와 인터럽트컨트롤러 연결시켜주는 부분
+	//초기화
+	xil_ExceptionInit();
+	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
+			(Xil_ExceptionHandler) XIntc_InterruptHandler, &IntrController);
+
+	//활성화
+	Xil_ExceptionDisable();
+}
+
+void ap_init() {
+	// 각 하위 서비스들 초기화
+	UpCounter_Init();
+	SetupInterruptSystem();
+
+	TMR1_PSC = 100-1; //1Mhz tick
+	TMR1_ARR = 1000000 -1; //1sec
+	TMR1_CR |= 1<<2; //TMR_intr_en;
+	TMR1_CR |= 1<<0; //TMR_intren;
+
+	TMR2_PSC = 100-1; //1Mhz tick
+	TMR2_ARR = 2000000 -1; //2sec
+	TMR2_CR |= 1<<2; //TMR_intr_en;
+	TMR2_CR |= 1<<0; //TMR_intren;
+}
+
+//모든  code를 무한 Loop 돌면서 동작하는 방식을 "super loop 방식"이라고 함.
+void ap_excute() {
+ UpCounter_Excute();
+
+		millis_inc(); // 전역변수를 1씩 증가하는 것만 있음.
+		delay_ms(1); //1ms 간격으로 찍어줌.
+
+}
+

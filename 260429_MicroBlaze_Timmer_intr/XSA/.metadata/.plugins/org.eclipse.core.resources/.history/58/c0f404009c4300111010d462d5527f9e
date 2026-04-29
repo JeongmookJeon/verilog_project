@@ -1,0 +1,106 @@
+#include "xparameters.h"
+#include "xintc.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+
+#include "ap_main.h"
+#include "../common/common.h"
+#include "UpCounter/UpCounter.h"
+
+#define INTC_DEV_ID XPAR_INTC_0_DEVICE_ID
+#define TMR1_DEV_ID XPAR_TMR_1_DEVICE_ID
+#define TMR2_DEV_ID XPAR_TMR_2_DEVICE_ID
+
+#define TMR1_BASEADDR XPAR_TMR_1_S00_AXI_BASEADDR
+#define TMR2_BASEADDR XPAR_TMR_2_S00_AXI_BASEADDR
+
+#define TMR1_CR *(uint32_t *)(TMR1_BASEADDR + 0x00)
+#define TMR1_PSC *(uint32_t *)(TMR1_BASEADDR + 0x04)
+#define TMR1_ARR *(uint32_t *)(TMR1_BASEADDR + 0x08)
+#define TMR1_CNT *(uint32_t *)(TMR1_BASEADDR + 0x0c)
+
+#define TMR2_CR *(uint32_t *)(TMR2_BASEADDR + 0x00)
+#define TMR2_PSC *(uint32_t *)(TMR2_BASEADDR + 0x04)
+#define TMR2_ARR *(uint32_t *)(TMR2_BASEADDR + 0x08)
+#define TMR2_CNT *(uint32_t *)(TMR2_BASEADDR + 0x0c)
+
+XIntc IntrController;
+
+//인터럽트 걸리면, 여기서 동작
+void TMR1_ISR(void *CallbackRef) {
+   xil_printf("1sec TIMER 1 ISR!\n");
+}
+void TMR2_ISR(void *CallbackRef) {
+   xil_printf("2sec TIMER 2 ISR!\n");
+}
+
+//초기화
+int SetupInterruptSystem() {
+   int status;
+
+   //1. 인터럽트 컨트롤러 초기화
+   status = XIntc_Initialize(&IntrController, INTC_DEV_ID);
+   if (status != XST_SUCCESS) {
+      return XST_FAILURE;
+   }
+   //2-1. TMR1_ISR 함수를 Intc와 연결
+   status = XIntc_Connect(&IntrController, TMR1_DEV_ID,
+         (XInterruptHandler) TMR1_ISR, (void*) 0);
+   if (status != XST_SUCCESS) {
+      return XST_FAILURE;
+   }
+   //인터럽트 컨트롤러랑 내가 만든 함수랑 연결한 것
+   status = XIntc_Connect(&IntrController, TMR2_DEV_ID,
+         (XInterruptHandler) TMR2_ISR, (void*) 0);
+   if (status != XST_SUCCESS) {
+      return XST_FAILURE;
+   }
+
+   //3. Interrupt Controller 시작 (Hardware Mode)
+   status = XIntc_Start(&IntrController, XIN_REAL_MODE);
+   if (status != XST_SUCCESS) {
+      return XST_FAILURE;
+   }
+   //4. 각각의 인터럽트 채널 활성화
+   XIntc_Enable(&IntrController, TMR1_DEV_ID);
+   XIntc_Enable(&IntrController, TMR2_DEV_ID);
+
+   //5. MicroBlaze 의 Exception 초기화 및 활성화
+   //제일 마지막에 한 번만 실행하면 됨
+   //CPU와 인터럽트 컨트롤러를 연결시켜주는 부분
+   //인터럽트 추가시에 이건 그대로 써도 됨
+   //2번하고 4번만 수정해서 사용하면되고 나머지는 동일해서 복붙해서 사용해도 됨
+   //초기화
+   Xil_ExceptionInit();
+   Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
+         (Xil_ExceptionHandler) XIntc_InterruptHandler, &IntrController);
+   //활성화
+   Xil_ExceptionEnable();
+
+   return XST_SUCCESS;
+
+}
+
+void ap_init() {
+   UpCounter_Init();
+   SetupInterruptSystem();
+
+   TMR1_PSC = 100 - 1; // 1MHz의 tick 발생
+   TMR1_ARR = 1000000 - 1; // 1sec 마다 한 번씩 발생
+   TMR1_CR |= 1 << 2; //TMR_intr_en
+   TMR1_CR |= 1 << 0; //TMR_en
+
+   TMR2_PSC = 100 - 1; // 1MHz의 tick 발생
+   TMR2_ARR = 2000000 - 1; // 2sec 마다 한 번씩 발생
+   TMR2_CR |= 1 << 2; //TMR_intr_en
+   TMR2_CR |= 1 << 0; //TMR_en
+}
+
+void ap_excute() {
+   while (1) {
+      UpCounter_Excute();
+
+      millis_inc();
+      delay_ms(1);
+   }
+}

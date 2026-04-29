@@ -1,0 +1,28 @@
+timestamp=[2026-04-29 15:23:01], mode=WORKBENCH_START, duration=0:00:04.636, duration_ms=4636, data={}
+timestamp=[2026-04-29 15:23:01], mode=WORKBENCH_UI_INIT, duration=0:00:00.293, duration_ms=293, data={editors_count=0, platform_editors_count=0, projects_count=0, platform_projects_count=0, active_platform_editor=false, projects=}
+timestamp=[2026-04-29 15:23:05], mode=PLATFORM_REPOSITORY_INIT, duration=0:00:03.439, duration_ms=3439, data={}
+timestamp=[2026-04-29 15:23:52], mode=APP_CREATION, duration=0:00:05.886, duration_ms=5886, data={name=upcounter_timeclock, project_type=sdk, os=standalone, processor=microblaze, runtime=cpp, platform=design_1_wrapper, application_type=application}
+timestamp=[2026-04-29 15:25:17], mode=PLATFORM_GENERATION, duration=0:00:05.140, duration_ms=5140, data={name=design_1_wrapper}
+timestamp=[2026-04-29 15:25:20], mode=BUILD, duration=0:00:02.886, duration_ms=2886, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:12:59], mode=BUILD, duration=0:00:00.256, duration_ms=256, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:13:34], mode=BUILD, duration=0:00:00.235, duration_ms=235, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:20:10], mode=BUILD, duration=0:00:00.686, duration_ms=686, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:21:12], mode=BUILD, duration=0:00:00.246, duration_ms=246, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:22:04], mode=BUILD, duration=0:00:00.614, duration_ms=614, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:22:19], mode=BUILD, duration=0:00:00.136, duration_ms=136, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:26:45], mode=BUILD, duration=0:00:00.740, duration_ms=740, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:35:15], mode=BUILD, duration=0:00:00.253, duration_ms=253, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:35:45], mode=BUILD, duration=0:00:00.317, duration_ms=317, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:36:31], mode=BUILD, duration=0:00:00.748, duration_ms=748, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:37:29], mode=BUILD, duration=0:00:00.749, duration_ms=749, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:40:27], mode=BUILD, duration=0:00:00.743, duration_ms=743, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 16:44:38], mode=BUILD, duration=0:00:00.262, duration_ms=262, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:05:22], mode=BUILD, duration=0:00:02.969, duration_ms=2969, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:05:59], mode=BUILD, duration=0:00:01.238, duration_ms=1238, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:06:03], mode=BUILD, duration=0:00:00.119, duration_ms=119, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:07:03], mode=BUILD, duration=0:00:00.115, duration_ms=115, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:11:44], mode=BUILD, duration=0:00:00.460, duration_ms=460, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:11:44], mode=BUILD, duration=0:00:00.125, duration_ms=125, data={name=upcounter_timeclock_system, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:13:54], mode=BUILD, duration=0:00:00.675, duration_ms=675, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:17:12], mode=BUILD, duration=0:00:00.877, duration_ms=877, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
+timestamp=[2026-04-29 19:18:42], mode=BUILD, duration=0:00:00.869, duration_ms=869, data={name=upcounter_timeclock, configuration=Debug, clean_build=false}
