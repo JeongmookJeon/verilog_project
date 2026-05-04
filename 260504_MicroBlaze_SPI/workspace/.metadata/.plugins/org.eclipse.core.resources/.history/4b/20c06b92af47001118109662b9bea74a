@@ -1,0 +1,114 @@
+#include "xil_printf.h"
+#include "ap_main.h"
+#include "../HAL/TMR/TMR.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../driver/Button/Button.h"
+#include "../HAL/SPI/SPI.h"
+#include "UPCounter/UPCounter.h"
+#include "TimeClock/Clock.h"
+#include "interrupt.h"
+
+// 3가지 상태 정의
+typedef enum {
+    SWITCH_MODE,
+    TIME_CLOCK,
+    UP_COUNTER
+} modeState_t;
+
+modeState_t modeState = SWITCH_MODE; // 기본 구동 상태
+
+// 버튼 객체 3개 독립 선언
+hBtn_t btn_SwitchMode;
+hBtn_t btn_TimeClock;
+hBtn_t btn_UpCounter;
+
+// SPI 전송 주기를 제어하기 위한 변수
+extern uint32_t millis_tick;
+uint32_t last_spi_time = 0;
+
+void ap_init() {
+    // 1. 3개의 버튼을 각각 다른 핀으로 초기화
+    Button_Init(&btn_SwitchMode, GPIOA, GPIO_PIN_4); // T18 (Up)
+    Button_Init(&btn_TimeClock,  GPIOA, GPIO_PIN_5); // W19 (Left)
+    Button_Init(&btn_UpCounter,  GPIOA, GPIO_PIN_6); // T17 (Right)
+
+    // 2. 스위치 입력 핀 초기화 (GPIOB 0~7번 핀)
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 3. SPI 마스터 초기화 (clk_div=4, CPOL=0, CPHA=0)
+    SPI_Init(SPI0, 200, 0, 0);
+
+    UpCounter_Init();
+    TimeClock_Init();
+    SetupInterruptSystem();
+
+    // 타이머 0: 1us 딜레이용
+    TMR_SetPSC(TMR0, 100 - 1);
+    TMR_SetARR(TMR0, 0xffffffff);
+    TMR_StopIntr(TMR0);
+    TMR_StartTimer(TMR0);
+
+    // 타이머 1: 1ms 시스템 틱 발생용
+    TMR_SetPSC(TMR1, 100 - 1);
+    TMR_SetARR(TMR1, 1000 - 1);
+    TMR_StartIntr(TMR1);
+    TMR_StartTimer(TMR1);
+
+    // 타이머 2: 10ms 시계/카운터용
+    TMR_SetPSC(TMR2, 100 - 1);
+    TMR_SetARR(TMR2, 10000 - 1);
+    TMR_StartIntr(TMR2);
+    TMR_StartTimer(TMR2);
+}
+
+void ap_excute() {
+    // 이전 상태를 기억하는 변수 추가
+    static button_act_t prev_btn4 = ACT_RELEASED;
+    static button_act_t prev_btn5 = ACT_RELEASED;
+    static button_act_t prev_btn6 = ACT_RELEASED;
+
+    while (1) {
+        // 현재 버튼 상태 읽기
+        button_act_t cur_btn4 = Button_GetState(&btn_SwitchMode);
+        button_act_t cur_btn5 = Button_GetState(&btn_TimeClock);
+        button_act_t cur_btn6 = Button_GetState(&btn_UpCounter);
+
+        // 버튼이 확실하게 떼어지는 순간(Falling Edge)에만 모드 변경
+        if (cur_btn4 == ACT_RELEASED && prev_btn4 == ACT_PUSHED) {
+            modeState = SWITCH_MODE;
+        }
+        else if (cur_btn5 == ACT_RELEASED && prev_btn5 == ACT_PUSHED) {
+            modeState = TIME_CLOCK;
+        }
+        else if (cur_btn6 == ACT_RELEASED && prev_btn6 == ACT_PUSHED) {
+            modeState = UP_COUNTER;
+        }
+        // -----------------------------------------------------
+        // [현재 모드에 따른 개별 동작 로직]
+        // -----------------------------------------------------
+        switch (modeState) {
+            case SWITCH_MODE:
+                // 100ms 간격으로 스위치 값을 읽어 SPI 슬레이브로 전송
+                if (millis_tick - last_spi_time >= 100) {
+                    uint8_t sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+                    SPI_Send(SPI0, sw_data);
+                    last_spi_time = millis_tick;
+                }
+                break;
+
+            case TIME_CLOCK:
+                TimeClock_Excute();
+                // 100ms 간격으로 초(Second) 데이터를 SPI 슬레이브로 전송
+                if (millis_tick - last_spi_time >= 100) {
+                    extern timeClock_t timeClock;
+                    SPI_Send(SPI0, timeClock.sec);
+                    last_spi_time = millis_tick;
+                }
+                break;
+
+            case UP_COUNTER:
+                UpCounter_Excute();
+                break;
+        }
+    }
+}

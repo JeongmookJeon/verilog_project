@@ -1,0 +1,25 @@
+#include "SPI.h"
+
+void SPI_Init(SPI_Typedef_t *SPIx, uint8_t clk_div, int cpol, int cpha) {
+    uint32_t cr_val = clk_div; // 하위 8비트에 분주비 설정[cite: 2]
+
+    if (cpol) cr_val |= (1 << SPI_CR_CPOL_BIT); // CPOL 비트 (8번)
+    if (cpha) cr_val |= (1 << SPI_CR_CPHA_BIT); // CPHA 비트 (9번)
+
+    SPIx->CR = cr_val; // 제어 레지스터에 적용
+}
+
+void SPI_Send(SPI_Typedef_t *SPIx, uint8_t data) {
+    // 1. 송신 데이터를 TX_DATA 레지스터에 기록[cite: 2]
+    SPIx->TX_DATA = data;
+
+    // 2. 통신 시작: START 비트(10번)를 1로 세팅[cite: 3]
+    SPIx->CR |= (1 << SPI_CR_START_BIT);
+
+    // 3. 통신 완료 대기: SR_RX 레지스터의 DONE 비트(9번) 확인[cite: 3]
+    // 하드웨어 주소가 틀리면 여기서 CPU가 멈출 수 있습니다.
+    while ((SPIx->SR_RX & (1 << SPI_SR_DONE_BIT)) == 0);
+
+    // 4. 다음 전송을 위해 START 비트 해제[cite: 2]
+    SPIx->CR &= ~(1 << SPI_CR_START_BIT);
+}

@@ -1,0 +1,56 @@
+#include "xil_printf.h"
+#include "ap_main.h"
+#include "../HAL/TMR/TMR.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../driver/Button/Button.h"
+#include "../driver/SPI/SPI.h"
+#include "interrupt.h"
+
+// 송신을 트리거할 버튼 객체 선언
+hBtn_t btn_Send;
+
+void ap_init() {
+    // 1. 송신 버튼 초기화: T18 (Up 화살표) = GPIOA의 4번 핀
+    // 이 버튼을 누를 때마다 스위치 값이 슬레이브로 전송됩니다.
+    Button_Init(&btn_Send, GPIOA, GPIO_PIN_4);
+
+    // 2. 딥스위치 8개 입력 핀 초기화: GPIOB의 0~7번 핀
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 3. SPI 마스터 초기화: 통신 속도를 안정화하기 위해 분주비 200 적용
+    // (CPOL=0, CPHA=0 모드)
+    SPI_Init(SPI0, 200, 0, 0);
+
+    // 4. 시스템 타이머 구동 (Button 라이브러리의 delay_ms 용도)
+    TMR_SetPSC(TMR0, 100 - 1);
+    TMR_SetARR(TMR0, 0xffffffff);
+    TMR_StopIntr(TMR0);
+    TMR_StartTimer(TMR0);
+
+    // 5. 시스템 틱 인터럽트 활성화
+    SetupInterruptSystem();
+    TMR_SetPSC(TMR1, 100 - 1);
+    TMR_SetARR(TMR1, 1000 - 1);
+    TMR_StartIntr(TMR1);
+    TMR_StartTimer(TMR1);
+}
+
+void ap_excute() {
+    // 초기화 완료 메시지 출력
+    xil_printf("Master Ready. Press T18 (Up) to send SW data.\r\n");
+
+    while (1) {
+        // T18 버튼이 눌렸다가 떼어지는 순간(Falling Edge)에만 1회 동작
+        if (Button_GetState(&btn_Send) == ACT_RELEASED) {
+
+            // 1. 현재 딥스위치 상태(0~255) 읽어오기
+            uint8_t sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+
+            // 2. SPI로 해당 스위치 값 전송
+            SPI_Send(SPI0, sw_data);
+
+            // 3. Vitis 시리얼 터미널에 전송 결과 출력 (디버깅용)
+            xil_printf("Send Success! TX Data: %d\r\n", sw_data);
+        }
+    }
+}

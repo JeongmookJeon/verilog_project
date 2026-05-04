@@ -1,0 +1,98 @@
+#include "xil_printf.h"
+#include "ap_main.h"
+#include "../HAL/TMR/TMR.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../driver/Button/Button.h"
+#include "../HAL/SPI/SPI.h"
+#include "UPCounter/UPCounter.h"
+#include "TimeClock/Clock.h"
+#include "interrupt.h"
+
+// 3가지 상태 정의
+typedef enum {
+    SWITCH_MODE, // 스위치 값을 SPI로 전송
+    TIME_CLOCK,  // 시계 값을 SPI로 전송
+    UP_COUNTER
+} modeState_t;
+
+modeState_t modeState = SWITCH_MODE;
+hBtn_t hbtnMode;
+
+// SPI 전송 주기를 제어하기 위한 변수
+extern uint32_t millis_tick; // common.c 또는 interrupt.c에서 1ms마다 증가하는 변수
+uint32_t last_spi_time = 0;
+
+void ap_init() {
+    // 1. 모드 변경 버튼 초기화 (예: GPIOA 5번 핀)
+    Button_Init(&hbtnMode, GPIOA, GPIO_PIN_5);
+
+    // 2. 스위치 입력 핀 초기화 (예: GPIOB 0~7번 핀)
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 3. SPI 마스터 초기화 (clk_div=4, CPOL=0, CPHA=0)
+    // clk_div는 시스템 클럭(100MHz)을 나눌 분주비입니다.
+    SPI_Init(SPI0, 4, 0, 0);
+
+    UpCounter_Init();
+    TimeClock_Init();
+    SetupInterruptSystem(); // 기존 인터럽트 세팅 유지
+
+    // 타이머 0: 1us 딜레이용 (인터럽트 끔)
+    TMR_SetPSC(TMR0, 100 - 1);
+    TMR_SetARR(TMR0, 0xffffffff);
+    TMR_StopIntr(TMR0);
+    TMR_StartTimer(TMR0);
+
+    // 타이머 1: 1ms 시스템 틱 발생용 (TMR1_ISR 실행)
+    TMR_SetPSC(TMR1, 100 - 1);
+    TMR_SetARR(TMR1, 1000 - 1);
+    TMR_StartIntr(TMR1);
+    TMR_StartTimer(TMR1);
+
+    // 타이머 2: 10ms 시계/카운터용 (TMR2_ISR 실행)
+    TMR_SetPSC(TMR2, 100 - 1);
+    TMR_SetARR(TMR2, 10000 - 1);
+    TMR_StartIntr(TMR2);
+    TMR_StartTimer(TMR2);
+}
+
+void ap_excute() {
+    while (1) {
+        // 모드 전환 로직
+        if (Button_GetState(&hbtnMode) == ACT_RELEASED) {
+            if (modeState == SWITCH_MODE) modeState = TIME_CLOCK;
+            else if (modeState == TIME_CLOCK) modeState = UP_COUNTER;
+            else modeState = SWITCH_MODE;
+        }
+
+        switch (modeState) {
+            case SWITCH_MODE:
+                // 100ms 간격으로 스위치 값을 읽어 SPI 슬레이브로 전송
+                if (millis_tick - last_spi_time >= 100) {
+                    uint8_t sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+                    SPI_Send(SPI0, sw_data);
+                    last_spi_time = millis_tick;
+                }
+                break;
+
+            case TIME_CLOCK:
+                TimeClock_Excute(); // 내부 시계 로직 실행
+
+                // 100ms 간격으로 초(Second) 데이터를 SPI 슬레이브로 전송
+                if (millis_tick - last_spi_time >= 100) {
+                    // Clock.c에 선언된 timeClock 구조체 가져오기
+                    extern timeClock_t timeClock;
+
+                    // 현재 SPI가 8비트이므로, 0~59까지 변하는 '초'를 전송합니다.
+                    // Slave의 Verilog 코드가 데이터를 10진수로 분리하므로 FND에 초 단위가 정상 출력됩니다.
+                    SPI_Send(SPI0, timeClock.sec);
+                    last_spi_time = millis_tick;
+                }
+                break;
+
+            case UP_COUNTER:
+                UpCounter_Excute();
+                break;
+        }
+    }
+}

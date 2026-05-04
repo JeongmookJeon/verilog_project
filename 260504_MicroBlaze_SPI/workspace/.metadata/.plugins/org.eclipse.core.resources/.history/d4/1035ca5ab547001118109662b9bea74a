@@ -1,0 +1,28 @@
+#ifndef SRC_HAL_SPI_SPI_H_
+#define SRC_HAL_SPI_SPI_H_
+
+#include <stdint.h>
+
+// AXI 하드웨어 레지스터 맵핑 구조체
+typedef struct {
+    uint32_t CR;        // 0x00: Control Register (clk_div, cpol, cpha, start)
+    uint32_t TX_DATA;   // 0x04: Transmit Data Register
+    uint32_t SR_RX;     // 0x08: Status & Receive Register (busy, done, rx_data)
+} SPI_Typedef_t;
+
+// Vivado Address Editor에 설정된 실제 Base Address
+#define XPAR_SPI_0_S00_AXI_BASEADDR 0x44A30000
+#define SPI0 ((SPI_Typedef_t *) (XPAR_SPI_0_S00_AXI_BASEADDR))
+
+// 비트 오프셋 정의
+#define SPI_CR_CPOL_BIT   8
+#define SPI_CR_CPHA_BIT   9
+#define SPI_CR_START_BIT  10
+
+#define SPI_SR_BUSY_BIT   8
+#define SPI_SR_DONE_BIT   9
+
+void SPI_Init(SPI_Typedef_t *SPIx, uint8_t clk_div, int cpol, int cpha);
+void SPI_Send(SPI_Typedef_t *SPIx, uint8_t data);
+
+#endif /* SRC_HAL_SPI_SPI_H_ */

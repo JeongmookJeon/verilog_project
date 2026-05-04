@@ -1,0 +1,30 @@
+#include "SPI.h"
+
+// SPI 통신 모드 및 속도 설정
+void SPI_Init(SPI_Typedef_t *SPIx, uint8_t clk_div, int cpol, int cpha) {
+    uint32_t cr_val = clk_div; // 하위 8비트는 clk_div
+
+    // CPOL, CPHA 비트 셋업
+    if (cpol) cr_val |= (1 << SPI_CR_CPOL_BIT);
+    if (cpha) cr_val |= (1 << SPI_CR_CPHA_BIT);
+
+    // start 비트는 0으로 유지한 채 제어 레지스터 덮어쓰기
+    SPIx->CR = cr_val;
+}
+
+// 8비트 데이터 송신 및 대기
+void SPI_Send(SPI_Typedef_t *SPIx, uint8_t data) {
+    // 1. 송신할 8비트 데이터 쓰기
+    SPIx->TX_DATA = data;
+
+    // 2. 통신 시작 (Start 펄스 발생)
+    SPIx->CR |= (1 << SPI_CR_START_BIT);
+
+    // 3. 통신 완료(Done) 플래그가 하드웨어에서 1로 올라올 때까지 폴링(Polling) 대기
+    while ((SPIx->SR_RX & (1 << SPI_SR_DONE_BIT)) == 0) {
+        // 무한 대기 (하드웨어 통신 완료 시 탈출)
+    }
+
+    // 4. Start 비트 초기화 (다음 전송을 위함)
+    SPIx->CR &= ~(1 << SPI_CR_START_BIT);
+}

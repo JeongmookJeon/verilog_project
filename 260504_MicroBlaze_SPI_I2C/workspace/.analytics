@@ -1,0 +1,11 @@
+timestamp=[2026-05-04 10:56:38], mode=WORKBENCH_START, duration=0:00:05.048, duration_ms=5048, data={}
+timestamp=[2026-05-04 10:56:38], mode=WORKBENCH_UI_INIT, duration=0:00:00.332, duration_ms=332, data={editors_count=0, platform_editors_count=0, projects_count=0, platform_projects_count=0, active_platform_editor=false, projects=}
+timestamp=[2026-05-04 10:56:42], mode=PLATFORM_REPOSITORY_INIT, duration=0:00:03.501, duration_ms=3501, data={}
+timestamp=[2026-05-04 10:58:43], mode=APP_CREATION, duration=0:00:06.438, duration_ms=6438, data={name=SPI, project_type=sdk, os=standalone, processor=microblaze, runtime=cpp, platform=design_1_wrapper, application_type=application}
+timestamp=[2026-05-04 11:14:57], mode=PLATFORM_GENERATION, duration=0:00:05.222, duration_ms=5222, data={name=design_1_wrapper}
+timestamp=[2026-05-04 11:15:00], mode=BUILD, duration=0:00:03.808, duration_ms=3808, data={name=SPI, configuration=Debug, clean_build=false}
+timestamp=[2026-05-04 11:26:08], mode=BUILD, duration=0:00:00.142, duration_ms=142, data={name=SPI, configuration=Debug, clean_build=false}
+timestamp=[2026-05-04 12:00:18], mode=BUILD, duration=0:00:02.255, duration_ms=2255, data={name=SPI, configuration=Debug, clean_build=false}
+timestamp=[2026-05-04 17:51:39], mode=WORKBENCH_START, duration=0:00:12.089, duration_ms=12089, data={}
+timestamp=[2026-05-04 17:51:40], mode=WORKBENCH_UI_INIT, duration=0:00:01.086, duration_ms=1086, data={editors_count=8, platform_editors_count=1, projects_count=4, platform_projects_count=1, active_platform_editor=false, projects=RemoteSystemsTempFiles,SPI,SPI_system,design_1_wrapper}
+timestamp=[2026-05-04 17:51:41], mode=PLATFORM_REPOSITORY_INIT, duration=0:00:00.066, duration_ms=66, data={}

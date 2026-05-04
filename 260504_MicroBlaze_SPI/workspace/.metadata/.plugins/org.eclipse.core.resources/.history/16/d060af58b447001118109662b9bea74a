@@ -1,0 +1,29 @@
+#ifndef SRC_DRIVER_SPI_SPI_H_
+#define SRC_DRIVER_SPI_SPI_H_
+
+#include <stdint.h>
+
+// AXI 레지스터 오프셋 매핑 구조체
+typedef struct {
+    uint32_t CR;        // Offset 0x00: slv_reg0 (clk_div, cpol, cpha, start)
+    uint32_t TX_DATA;   // Offset 0x04: slv_reg1 (tx_data)
+    uint32_t SR_RX;     // Offset 0x08: slv_reg2 (rx_data, busy, done)
+} SPI_Typedef_t;
+
+// AXI Base Address (Vivado 환경에 맞게 수정)
+#define XPAR_SPI_0_S00_AXI_BASEADDR 0x44A30000
+#define SPI0 ((SPI_Typedef_t *) (XPAR_SPI_0_S00_AXI_BASEADDR))
+
+// 제어 레지스터(CR) 비트 위치
+#define SPI_CR_CPOL_BIT   8
+#define SPI_CR_CPHA_BIT   9
+#define SPI_CR_START_BIT  10
+
+// 상태 레지스터(SR_RX) 비트 위치
+#define SPI_SR_BUSY_BIT   8
+#define SPI_SR_DONE_BIT   9
+
+void SPI_Init(SPI_Typedef_t *SPIx, uint8_t clk_div, int cpol, int cpha);
+void SPI_Send(SPI_Typedef_t *SPIx, uint8_t data);
+
+#endif /* SRC_DRIVER_SPI_SPI_H_ */

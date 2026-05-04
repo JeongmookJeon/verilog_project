@@ -1,0 +1,44 @@
+#include "xil_printf.h"
+#include "ap_main.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../driver/SPI/SPI.h"
+
+void ap_init() {
+    // 버튼과 스위치를 가장 원시적인 방법으로 초기화 (Button.c 사용 안 함)
+    GPIO_SetMode(GPIOA, GPIO_PIN_4, INPUT); // T18 버튼
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);       // 스위치 8개
+
+    // SPI 초기화 (분주비 200 적용)
+    SPI_Init(SPI0, 200, 0, 0);
+}
+
+void ap_excute() {
+    xil_printf("\r\n--- SAFE MODE START ---\r\n");
+
+    uint32_t prev_btn = 0; // 이전 버튼 상태 저장용
+
+    while (1) {
+        // 타이머 없이 GPIO 핀 상태를 직접 읽음
+        uint32_t cur_btn = GPIO_ReadPin(GPIOA, GPIO_PIN_4);
+
+        // 버튼이 안 눌려있다가(0) 눌린(1) 순간을 감지
+        if (cur_btn == 1 && prev_btn == 0) {
+
+            // 1. 스위치 값 읽기
+            uint8_t sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+
+            // 2. SPI 전송
+            SPI_Send(SPI0, sw_data);
+
+            // 3. 터미널 출력
+            xil_printf("SPI Sent Data: %d\r\n", sw_data);
+
+            // 4. 타이머 의존성 없는 무식한(?) 소프트웨어 딜레이 (채터링 방지)
+            for (volatile int i = 0; i < 1000000; i++) {
+                // 아무것도 안 하면서 시간만 보냄 (CPU 멈춤 절대 발생 안 함)
+            }
+        }
+
+        prev_btn = cur_btn; // 상태 업데이트
+    }
+}

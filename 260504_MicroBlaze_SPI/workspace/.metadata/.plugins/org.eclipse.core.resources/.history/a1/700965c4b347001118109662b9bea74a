@@ -1,0 +1,56 @@
+#include <stdint.h>
+#include "xil_printf.h"
+#include "ap_main.h"
+#include "../HAL/TMR/TMR.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../driver/Button/Button.h"
+#include "../HAL/SPI/SPI.h"
+#include "interrupt.h"
+
+// 버튼 객체
+hBtn_t btn_Send;
+
+void ap_init() {
+    // 1. 버튼 입력 설정
+    Button_Init(&btn_Send, GPIOA, GPIO_PIN_4);
+
+    // 2. 딥스위치 입력
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 3. SPI 초기화 (Mode0, 저속)
+    SPI_Init(SPI0, 200, 0, 0);
+
+    // 4. free-running 타이머 (millis용)
+    TMR_SetPSC(TMR0, 100 - 1);
+    TMR_SetARR(TMR0, 0xFFFFFFFF);
+    TMR_StopIntr(TMR0);
+    TMR_StartTimer(TMR0);
+
+    //  인터럽트 시스템 먼저
+    SetupInterruptSystem();
+
+    //  1ms tick 타이머
+    TMR_SetPSC(TMR1, 100 - 1);
+    TMR_SetARR(TMR1, 1000 - 1);
+    TMR_StartTimer(TMR1);   // 먼저 스타트
+    TMR_StartIntr(TMR1);    // 그 다음 인터럽트 enable
+}
+
+void ap_excute() {
+    xil_printf("System Ready. Press T18 to Send Switch Data.\r\n");
+
+    while (1) {
+
+        //  버튼 상태 계속 업데이트 (이거 없으면 절대 안됨)
+        Button_Update(&btn_Send);
+
+        if (Button_GetState(&btn_Send) == ACT_RELEASED) {
+
+            uint8_t sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+
+            SPI_Send(SPI0, sw_data);
+
+            xil_printf("Send Complete! TX Data: %d\r\n", sw_data);
+        }
+    }
+}

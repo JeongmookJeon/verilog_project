@@ -1,0 +1,52 @@
+/*
+#ifndef SRC_DRIVER_SPI_SPI_H_
+#define SRC_DRIVER_SPI_SPI_H_
+
+#include <stdint.h>
+
+typedef struct {
+    uint32_t CR;        // Offset 0x00[cite: 3]
+    uint32_t TX_DATA;   // Offset 0x04[cite: 3]
+    uint32_t SR_RX;     // Offset 0x08[cite: 3]
+} SPI_Typedef_t;
+
+// [주의] Vivado Address Editor에서 SPI_0 주소가 아래와 맞는지 확인 필수!
+#define XPAR_SPI_0_S00_AXI_BASEADDR 0x44A30000
+#define SPI0 ((SPI_Typedef_t *) (XPAR_SPI_0_S00_AXI_BASEADDR))
+
+// 제어 및 상태 비트 위치[cite: 3]
+#define SPI_CR_CPOL_BIT   8
+#define SPI_CR_CPHA_BIT   9
+#define SPI_CR_START_BIT  10
+#define SPI_SR_DONE_BIT   9
+
+void SPI_Init(SPI_Typedef_t *SPIx, uint8_t clk_div, int cpol, int cpha);
+void SPI_Send(SPI_Typedef_t *SPIx, uint8_t data);
+
+#endif
+*/
+
+#ifndef SRC_DRIVER_SPI_SPI_H_
+#define SRC_DRIVER_SPI_SPI_H_
+
+#include <stdint.h>
+
+#define SPI_BASEADDR 0x44A30000
+
+typedef struct {
+	uint32_t CR;
+	uint32_t TX;
+	uint32_t RX;
+}SPI_Typedef_t;
+
+#define SPI ((SPI_Typedef_t *) (SPI_BASEADDR))
+
+void SPI_SetCR(SPI_Typedef_t *SPIx, uint8_t clk_div, uint8_t cpol, uint8_t cpha);
+void SPI_Start(SPI_Typedef_t *SPIx, uint8_t start);
+void SPI_SetTX(SPI_Typedef_t *SPIx, uint8_t tx_data);
+uint8_t SPI_GetRX_Data(SPI_Typedef_t *SPIx);
+uint8_t SPI_GetRX_Busy(SPI_Typedef_t *SPIx);
+uint8_t SPI_GetRX_Done(SPI_Typedef_t *SPIx);
+
+#endif /* SRC_HAL_SPI_SPI_H_ */
+

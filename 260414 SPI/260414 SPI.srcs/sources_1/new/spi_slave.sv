@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-
-
 module slave_top (
     input  logic       clk,          // 100MHz 시스템 클럭
     input  logic       reset,        // Active High 리셋 버튼 (U18)
@@ -172,88 +170,181 @@ module spi_slave (
     end
 endmodule
 
-/*
-module spi_slave (
-    input  logic       clk,
-    input  logic       reset,
-    output logic [7:0] rx_data,
-    output logic       done,
-    input  logic       sclk,
-    input  logic       mosi,     //[master] out slave in
-    output logic       miso,     // master in [slave] out
-    input  logic       cs_n      //  active low signal
+
+
+module fnd_controller (
+    input        clk,
+    input        reset,
+    input  [13:0] fnd_in_data,
+    output [3:0] fnd_digit,
+    output [7:0] fnd_data
 );
-    typedef enum logic [1:0] {
-        IDLE  = 2'b00,
-        START,
-        DATA,
-        STOP
-    } spi_state_e;
 
-    spi_state_e state;
-    logic [7:0] tx_shift_reg;
-    logic [7:0] rx_shift_reg;
-    logic [2:0] bit_cnt;  // 8bit siganl reg & count
-    //logic sclk_r;  // sclk register
+    wire [3:0] w_digit_1, w_digit_10, w_digit_100, w_digit_1000, w_mux_4x1_out;
+    wire [1:0] w_digit_sel;
+    wire w_1khz;
 
-    //assign sclk = ~sclk;
+    digit_splitter U_DIGIT_SPL (
+        .in_data(fnd_in_data),
+        .digit_1(w_digit_1),
+        .digit_10(w_digit_10),
+        .digit_100(w_digit_100),
+        .digit_1000(w_digit_1000)
+    );
 
+    clk_div U_CLK_DIV (
+        .clk(clk),
+        .reset(reset),
+        .o_1khz(w_1khz)
+    );
 
-    always_ff @(posedge clk, posedge reset) begin
+    counter_4 U_COUNTER_4 (
+        .clk(w_1khz),
+        .reset(reset),
+        .digit_sel(w_digit_sel)
+    );
+
+    decoder_2x4 U_DECODER_2x4 (
+        .digit_sel(w_digit_sel),
+        .fnd_digit(fnd_digit)
+    );
+
+    mux_4x1 U_MUX_4x1 (
+        .sel(w_digit_sel),
+        .digit_1(w_digit_1),
+        .digit_10(w_digit_10),
+        .digit_100(w_digit_100),
+        .digit_1000(w_digit_1000),
+        .mux_out(w_mux_4x1_out)
+    );
+
+    bcd U_BCD (
+        .bcd(w_mux_4x1_out),
+        .fnd_data(fnd_data)
+    );
+
+endmodule
+
+module clk_div (
+    input      clk,
+    input      reset,
+    output reg o_1khz
+);
+    
+    reg [16:0] counter_r; // [16:0] 대신 {$clog2(100_000):0]로 해도 된다.
+
+    always @(posedge clk, posedge reset) begin
         if (reset) begin
-            state   <= IDLE;
-            miso    <= 1'b1;
-            rx_data <= 0;
-            done    <= 1'b0;
-            bit_cnt <= 0;
+            counter_r <= 0;
+            o_1khz    <= 1'b0;
         end else begin
-            case (state)
-                IDLE: begin
-                    miso    <= 1'b1;
-                    rx_data <= 0;
-                    bit_cnt <= 0;
-                    done    <= 1'b0;
-                    if (!cs_n) begin
-                        state <= START;
-                    end
-                end
-                //슬레이브 송신
-                START: begin
-                    //7번째 bit를 보냄(MSB)
-                    miso <= rx_shift_reg[7];
-                    //7번쨰 bit부터 0으로 채워짐
-                    rx_shift_reg <= {rx_shift_reg[6:0], 1'b0};
-                    state <= DATA;
-                end
-                //마스터 수신
-                DATA: begin
-                    if (sclk) begin
-                        rx_shift_reg <= {rx_shift_reg[6:0], mosi};
-                    end else begin  //송신 구간
-                        if (bit_cnt < 7) begin
-                            miso <= rx_shift_reg[7];
-                            rx_shift_reg <= {rx_shift_reg[6:0], 1'b0};
-                        end
-                        if (bit_cnt == 7) begin
-                            state   <= STOP;
-                            rx_data <= rx_shift_reg;
-                        end else begin
-                            bit_cnt <= bit_cnt + 1;
-                        end
-                    end
-                end
-                STOP: begin
-                    rx_data <= rx_shift_reg;
-                    miso    <= 1'b1;
-                    sclk_r  <= 1'b0;
-                    done    <= 1'b1;
-                    bit_cnt <= 0;
-                end
-                default: begin
-                    state <= IDLE;
-                end
-            endcase
+            if (counter_r == 99999) begin
+                counter_r <= 0;
+                o_1khz    <= 1'b1;
+            end else begin
+                counter_r <= counter_r + 1;
+                o_1khz    <= 1'b0;
+            end
+        end    
+    end
+
+endmodule
+
+module counter_4 (
+    input        clk,
+    input        reset,
+    output [1:0] digit_sel
+);
+    reg [1:0] counter_r;
+
+    assign digit_sel = counter_r;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset == 1) begin
+            // init courter_r
+            counter_r <= 0;
+        end else begin
+            // to do 
+            counter_r <= counter_r + 1;
         end
     end
+    
 endmodule
-*/
+
+// to select to fnd digit display
+module decoder_2x4 (
+    input      [1:0] digit_sel,
+    output reg [3:0] fnd_digit
+);
+
+    always @(digit_sel) begin
+        case (digit_sel)
+            2'b00: fnd_digit = 4'b1110;
+            2'b01: fnd_digit = 4'b1101;
+            2'b10: fnd_digit = 4'b1011;
+            2'b11: fnd_digit = 4'b0111;
+        endcase
+    end        
+
+endmodule
+
+module mux_4x1 (
+    input      [1:0] sel,
+    input      [3:0] digit_1,
+    input      [3:0] digit_10,
+    input      [3:0] digit_100,
+    input      [3:0] digit_1000,
+    output reg [3:0] mux_out
+);
+
+    always @(*) begin
+        case (sel)
+            2'b00: mux_out = digit_1;
+            2'b01: mux_out = digit_10;
+            2'b10: mux_out = digit_100;
+            2'b11: mux_out = digit_1000;
+        endcase
+    end
+
+endmodule
+
+module digit_splitter (
+    input  [13:0] in_data,
+    output [3:0] digit_1,
+    output [3:0] digit_10,
+    output [3:0] digit_100,
+    output [3:0] digit_1000
+);
+
+    assign digit_1 = in_data % 10;
+    assign digit_10 = (in_data/10) % 10;
+    assign digit_100 = (in_data/100) % 10;
+    assign digit_1000 = (in_data/1000) % 10;
+
+endmodule
+
+module bcd (
+    input      [3:0] bcd,
+    output reg [7:0] fnd_data
+);
+
+    always @(bcd) begin
+        case (bcd)
+            4'd0: fnd_data = 8'hC0;
+            4'd1: fnd_data = 8'hF9;
+            4'd2: fnd_data = 8'hA4;
+            4'd3: fnd_data = 8'hB0;
+            4'd4: fnd_data = 8'h99;
+            4'd5: fnd_data = 8'h92;
+            4'd6: fnd_data = 8'h82;
+            4'd7: fnd_data = 8'hF8;
+            4'd8: fnd_data = 8'h80;
+            4'd9: fnd_data = 8'h90;
+
+            default: fnd_data = 8'hFF;
+        endcase
+    end
+
+endmodule
+
+

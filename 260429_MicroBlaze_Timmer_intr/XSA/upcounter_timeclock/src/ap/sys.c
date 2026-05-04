@@ -1,8 +1,0 @@
-/*
- * sys.c
- *
- *  Created on: 2026. 4. 29.
- *      Author: kccistc
- */
-
-

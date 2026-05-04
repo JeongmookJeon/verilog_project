@@ -1,0 +1,40 @@
+#include <stdint.h>
+#include "ap_main.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../HAL/SPI/SPI.h"
+
+void ap_init() {
+    // 1. 딥스위치 8개 입력 핀 설정 (GPIOB)
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 2. SPI 마스터 초기화 (분주비 200, CPOL=0, CPHA=0)
+    // 저속 통신을 통해 물리적 점퍼선에서 발생하는 신호 왜곡을 최소화합니다.
+    SPI_Init(SPI0, 200, 0, 0);
+}
+
+void ap_excute() {
+    // 이전 스위치 상태를 저장하는 변수
+    uint8_t prev_sw_data = 0xFF;
+
+    while (1) {
+        // 1. 딥스위치 하위 8비트 레지스터 값 읽기
+        uint8_t cur_sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+
+        // 2. 스위치 값이 변경되었을 때만 SPI 전송 수행
+        // 매 사이클마다 전송할 경우 슬레이브 측 수신 버퍼에 오버런(Overrun)이 발생할 수 있습니다.
+        if (cur_sw_data != prev_sw_data) {
+
+            // 변경된 스위치 값을 슬레이브로 전송
+            SPI_Send(SPI0, cur_sw_data);
+
+            // 상태 업데이트
+            prev_sw_data = cur_sw_data;
+        }
+
+        // 3. 소프트웨어 지연 (Delay)
+        // 하드웨어 타이머를 배제하고 CPU 클럭 사이클을 직접 소모하여 안정성을 확보합니다.
+        for (volatile int i = 0; i < 50000; i++) {
+            // 대기
+        }
+    }
+}

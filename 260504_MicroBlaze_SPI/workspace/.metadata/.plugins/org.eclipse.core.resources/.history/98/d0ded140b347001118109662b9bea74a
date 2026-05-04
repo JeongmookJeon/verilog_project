@@ -1,0 +1,36 @@
+#include "ap_main.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../HAL/SPI/SPI.h"
+
+void ap_init() {
+    // 1. 딥스위치 8개 입력 핀 초기화 (GPIOB)
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 2. SPI 마스터 초기화 (분주비 200 적용하여 안정적인 저속 통신)
+    SPI_Init(SPI0, 200, 0, 0);
+}
+
+void ap_excute() {
+    // 이전 스위치 값을 기억할 변수 (초기값은 보드 스위치 상태와 다를 수 있는 쓰레기값 방지용으로 세팅)
+    uint8_t prev_sw_data = 0xFF;
+
+    while (1) {
+        // 1. 현재 딥스위치 상태(0~255) 읽어오기
+        uint8_t current_sw_data = GPIO_ReadPort(GPIOB) & 0xFF;
+
+        // 2. 스위치 값이 이전과 달라졌을 때만(즉, 사용자가 스위치를 조작했을 때만) 전송
+        if (current_sw_data != prev_sw_data) {
+
+            // 3. SPI로 해당 스위치 값 전송
+            SPI_Send(SPI0, current_sw_data);
+
+            // 4. 이전 값 업데이트
+            prev_sw_data = current_sw_data;
+
+            // 5. 무식한 소프트웨어 딜레이 (연속 전송으로 인한 꼬임 방지)
+            for (volatile int i = 0; i < 500000; i++) {
+                // CPU가 다른 곳에 한눈팔지 못하게 시간만 보냄
+            }
+        }
+    }
+}

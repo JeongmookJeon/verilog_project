@@ -1,0 +1,42 @@
+#include <stdint.h>
+#include "ap_main.h"
+#include "../HAL/GPIO/GPIO.h"
+#include "../HAL/SPI/SPI.h"
+
+// 버튼 상태를 기억하기 위한 변수
+uint32_t prev_btn_state = 0;
+
+void ap_init() {
+    // 1. 버튼 입력 설정: GPIOA의 4번 핀 (Basys 3의 T18 버튼)[cite: 1]
+    GPIO_SetMode(GPIOA, GPIO_PIN_4, INPUT);
+
+    // 2. 딥스위치 8개 입력 설정: GPIOB 전체 (0~7번 핀)[cite: 1]
+    GPIO_SetMode(GPIOB, 0xFF, INPUT);
+
+    // 3. SPI 초기화: 안정적인 통신을 위해 분주비 200 적용
+    SPI_Init(SPI0, 200, 0, 0);
+}
+
+void ap_excute() {
+    while (1) {
+        // 현재 T18 버튼의 전압 상태(High/Low)를 직접 읽어옵니다.
+        uint32_t curr_btn_state = GPIO_ReadPin(GPIOA, GPIO_PIN_4);
+
+        // 버튼이 안 눌려 있다가(0) 눌린(1) 순간(Rising Edge)을 감지합니다.
+        if (curr_btn_state == 1 && prev_btn_state == 0) {
+
+            // 1. 현재 딥스위치의 8비트 값을 읽습니다.
+            uint8_t sw_data = (uint8_t)(GPIO_ReadPort(GPIOB) & 0xFF);
+
+            // 2. SPI 하드웨어를 통해 해당 값을 슬레이브로 보냅니다.
+            SPI_Send(SPI0, sw_data);
+
+            // 3. 버튼이 한 번 눌렸을 때 여러 번 전송되지 않도록 짧게 대기합니다. (Debounce)
+            // 하드웨어 타이머 대신 CPU 사이클을 소모하는 루프를 사용합니다.
+            for (volatile int i = 0; i < 200000; i++);
+        }
+
+        // 현재 버튼 상태를 저장하여 다음 루프에서 비교합니다.
+        prev_btn_state = curr_btn_state;
+    }
+}

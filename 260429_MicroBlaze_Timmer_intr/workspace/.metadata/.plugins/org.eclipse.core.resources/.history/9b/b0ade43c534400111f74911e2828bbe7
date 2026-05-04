@@ -1,0 +1,68 @@
+#include "xil_printf.h"
+
+#include "ap_main.h"
+#include "../HAL/TMR/TMR.h"
+//#include "../common/common.h"
+#include "../driver/Button/Button.h"
+#include "UPCounter/UPCounter.h"
+#include "TimeClock/Clock.h"
+#include "interrupt.h"
+
+typedef enum {
+	TIME_CLOCK, UP_COUNTER
+} modeState_t;
+
+uint8_t modeState;
+modeState modeState = TIME_CLOCK;
+hBtn_t hbtnMode;
+
+void ap_init() {
+	Button_Init(&hbtnMode, GPIOA, GPIO_PIN_5);
+	UpCounter_Init();
+	TimeClock_Init();
+	//인터럽트에 대한 시스템 설정
+	SetupInterruptSystem();
+
+	//TMR0는 인터럽트는 안하고 카운트만 하도록
+	//1mhz -> 1us 간격으로 count 증가, 인터럽트 발생 안됨
+	//인터럽트 스탑을 사용했기 때문
+	TMR_SetPSC(TMR0, 100 - 1);
+	TMR_SetARR(TMR0, 0xffffffff);
+	//ARR이 최대값까지 가고 자동으로 overflow 발생해서 0으로 떨어짐
+	//제한 없이 끝까지 가겠다는 의미
+	//이걸로 delay_ms 대체 사용
+	TMR_StopIntr(TMR0);
+	TMR_StartTimer(TMR0);
+
+	//1khz->1ms 간격으로 인터럽트 발생
+	TMR_SetPSC(TMR1, 100 - 1);
+	TMR_SetARR(TMR1, 1000 - 1);
+	TMR_StartIntr(TMR1);
+	TMR_StartTimer(TMR1);
+
+	//100hz -> 10ms 간격으로 인터럽트 발생
+	TMR_SetPSC(TMR2, 100 - 1);
+	TMR_SetARR(TMR2, 10000 - 1);
+	TMR_StartIntr(TMR2);
+	TMR_StartTimer(TMR2);
+
+}
+
+void ap_excute() {
+	while (1) {
+		switch (modeState) {
+		case TIME_CLOCK:
+			TimeClock_Excute();
+			if (Button_GetState(hbtnMode) == ACT_RELEASED) {
+				modeState = UP_COUNTER;
+			}
+			break;
+		case UP_COUNTER:
+			UpCounter_Excute();
+			if (Button_GetState(&hbtnMode) == ACT_RELEASED) {
+				modeState = TIME_CLOCK;
+			}
+			break;
+		}
+	}
+}
