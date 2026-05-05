@@ -36,3 +36,6 @@ timestamp=[2026-05-04 21:27:24], mode=BUILD, duration=0:00:00.709, duration_ms=7
 timestamp=[2026-05-04 21:32:47], mode=BUILD, duration=0:00:00.888, duration_ms=888, data={name=SPI, configuration=Debug, clean_build=false}
 timestamp=[2026-05-04 21:45:19], mode=BUILD, duration=0:00:00.214, duration_ms=214, data={name=SPI, configuration=Debug, clean_build=true}
 timestamp=[2026-05-04 21:45:22], mode=BUILD, duration=0:00:02.646, duration_ms=2646, data={name=SPI, configuration=Debug, clean_build=false}
+timestamp=[2026-05-05 11:54:53], mode=WORKBENCH_START, duration=0:00:07.744, duration_ms=7744, data={}
+timestamp=[2026-05-05 11:54:54], mode=WORKBENCH_UI_INIT, duration=0:00:00.720, duration_ms=720, data={editors_count=15, platform_editors_count=1, projects_count=4, platform_projects_count=1, active_platform_editor=false, projects=RemoteSystemsTempFiles,SPI,SPI_system,design_1_wrapper}
+timestamp=[2026-05-05 11:54:54], mode=PLATFORM_REPOSITORY_INIT, duration=0:00:00.089, duration_ms=89, data={}
