@@ -28,7 +28,6 @@ typedef struct {
 	button_state_t prevState;
 }hBtn_t;
 
-
 void Button_Init(hBtn_t*hbtn, GPIO_Typedef_t *GPIOx, uint32_t GPIO_Pin);
 button_act_t Button_GetState(hBtn_t *hbtn);
 
