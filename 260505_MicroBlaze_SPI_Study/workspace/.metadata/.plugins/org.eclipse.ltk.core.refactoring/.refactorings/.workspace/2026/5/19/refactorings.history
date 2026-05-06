@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;SPI_Study/src/HAL/GPIO.c&apos;" deleteContents="false" description="Delete resource &apos;SPI_Study/src/HAL/GPIO.c&apos;" element1="/SPI_Study/src/HAL/GPIO.c" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1777975477681"/>&#x0A;<refactoring comment="Delete resource &apos;SPI_Study/src/HAL/GPIO/GPIO1.c&apos;" deleteContents="false" description="Delete resource &apos;SPI_Study/src/HAL/GPIO/GPIO1.c&apos;" element1="/SPI_Study/src/HAL/GPIO/GPIO1.c" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1777976925354"/>
+</session>
